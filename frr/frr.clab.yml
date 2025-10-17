@@ -1,0 +1,66 @@
+# topology documentation: http://containerlab.dev/lab-examples/min-clos/
+name: frr
+
+topology:      
+  defaults:
+    network-mode: none
+
+  nodes:
+    leafA:
+      kind: linux
+      image: quay.io/frrouting/frr:10.2.1
+      
+      binds:
+        - frrcommon/daemons:/etc/frr/daemons
+        - frrcommon/vtysh.conf:/etc/frr/vtysh.conf
+        - leafA.frr.conf:/etc/frr/frr.conf
+      exec:
+        - ip address add 192.168.1.2/24 dev tospine
+        - ip address add 192.168.3.1/24 dev eth1
+    
+    leafB:
+      kind: linux
+      image: quay.io/frrouting/frr:10.2.1
+      binds:
+        - frrcommon/daemons:/etc/frr/daemons
+        - frrcommon/vtysh.conf:/etc/frr/vtysh.conf
+        - leafB.frr.conf:/etc/frr/frr.conf
+      exec:
+        - ip address add 192.168.2.2/24 dev tospine
+        - ip address add 192.168.4.1/24 dev eth1
+
+    spine:
+      kind: linux
+      image: quay.io/frrouting/frr:10.2.1
+      binds:
+        - frrcommon/daemons:/etc/frr/daemons
+        - frrcommon/vtysh.conf:/etc/frr/vtysh.conf
+        - spine.frr.conf:/etc/frr/frr.conf
+      exec:
+        - ip address add 192.168.1.1/24 dev toleafa
+        - ip address add 192.168.2.1/24 dev toleafb        
+
+    host_a:
+      kind: linux
+      image: ghcr.io/hellt/network-multitool
+      cmd: sh -xc "while true; do ping 192.168.4.2; sleep 1; done"
+      exec:
+      - ip address add 192.168.3.2/24 dev eth1
+      - ip route add 192.168.4.0/24 via 192.168.3.1 dev eth1
+      
+    host_b:
+      kind: linux
+      image: ghcr.io/hellt/network-multitool
+      cmd: sh -xc "while true; do ping 192.168.3.2; sleep 1; done"
+      exec:
+      - ip address add 192.168.4.2/24 dev eth1
+      - ip route add 192.168.3.0/24 via 192.168.4.1 dev eth1
+
+      
+
+      
+  links:
+    - endpoints: ["leafA:tospine", "spine:toleafa"]
+    - endpoints: ["leafB:tospine", "spine:toleafb"]
+    - endpoints: ["host_a:eth1", "leafA:eth1"]
+    - endpoints: ["host_b:eth1", "leafB:eth1"]
