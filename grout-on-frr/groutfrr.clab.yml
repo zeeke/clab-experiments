@@ -1,0 +1,118 @@
+# topology documentation: http://containerlab.dev/lab-examples/min-clos/
+name: grout_frr
+
+topology:      
+  defaults:
+    network-mode: none
+    env:
+      CAPTURE_PCAP: false # Set to true to run tcpdump on the containers
+
+  nodes:
+    leafA:
+      kind: linux
+      image: quay.io/frrouting/frr:10.2.1
+      
+      binds:
+        - frrcommon/daemons:/etc/frr/daemons
+        - frrcommon/vtysh.conf:/etc/frr/vtysh.conf
+        - leafA.frr.conf:/etc/frr/frr.conf
+      exec:
+        - ip address add 192.168.1.2/24 dev tospine
+        - ip address add 192.168.3.1/24 dev eth1
+    
+    leafB:
+      kind: linux
+      image: quay.io/frrouting/frr:10.2.1
+      binds:
+        - frrcommon/daemons:/etc/frr/daemons
+        - frrcommon/vtysh.conf:/etc/frr/vtysh.conf
+        - leafB.frr.conf:/etc/frr/frr.conf
+      exec:
+        - ip address add 192.168.2.2/24 dev tospine
+        - ip address add 192.168.4.1/24 dev eth1
+
+    spine:
+      kind: linux
+      image: quay.io/grout/frr:edge
+      env:
+        GROUT_SOCK_PATH: /shared/spine.grout.sock
+        ZEBRA_DEBUG_DPLANE_GROUT: 1
+      binds:
+        - frrcommon/daemons.grout:/etc/frr/daemons
+        - frrcommon/vtysh.conf:/etc/frr/vtysh.conf
+        - ./spine.frr.conf:/etc/frr/frr.conf
+        - ./shared/:/shared/
+      
+    spine-grout:
+      kind: linux
+      image: quay.io/grout/grout:edge
+      network-mode: container:spine
+      cmd: grout -t --socket /shared/spine.grout.sock
+      cpu-set: 0,1,2
+      healthcheck:
+        test:
+        - CMD-SHELL
+        # spine-frr container could run with a different user than grout, so we need to chmod the socket to allow frr to read and write to it
+        - chmod a+rw /shared/spine.grout.sock
+        - grcli --socket /shared/spine.grout.sock interface show
+        interval: 1
+      exec:
+      - sh -c "echo 0 > /proc/sys/net/ipv4/ip_forward"
+      stages:
+        healthy:
+          exec:
+          - {target: container, phase: on-exit, command: "grcli --socket /shared/spine.grout.sock logging enable"}
+          - {target: container, phase: on-exit, command: "grcli --socket /shared/spine.grout.sock interface add port p0 devargs net_tap0,remote=toleafa,iface=tap_leafa"}
+          #- {target: container, phase: on-exit, command: "grcli --socket /shared/spine.grout.sock interface add port p1 devargs net_tap1,remote=toleafb,iface=tap_leafb"}
+          - {target: container, phase: on-exit, command: "grcli --socket /shared/spine.grout.sock address add 192.168.1.1/24 iface p0"}
+          #- {target: container, phase: on-exit, command: "grcli --socket /shared/spine.grout.sock address add 192.168.2.1/24 iface p1"}
+      binds:
+        - ./shared/:/shared/
+
+    spine-net-configure:
+      kind: linux
+      image: ghcr.io/hellt/network-multitool
+      network-mode: container:spine
+      cmd: sh -c 'if [ "$CAPTURE_PCAP" = "true" ]; then rm -rf /shared/spine.gr-loop0.pcap; tcpdump -l -i any -nn -s 65535 -w /shared/spine.gr-loop0.pcap; else sleep 10000; fi'
+      stages:
+        create:
+          wait-for:
+            - node: spine-grout
+              stage: healthy
+      exec:
+      - ip address add 192.168.1.1/32 dev gr-loop0
+      #- ip address add 192.168.2.1/32 dev gr-loop0
+      - ip route add default dev gr-loop0
+      binds:
+      - ./shared/:/shared/
+
+    host_a:
+      kind: linux
+      image: ghcr.io/hellt/network-multitool
+      cmd: sh -xc "while true; do ping 192.168.4.2; sleep 1; done"
+      exec:
+      - ip address add 192.168.3.2/24 dev eth1
+      - ip route add 192.168.4.0/24 via 192.168.3.1 dev eth1
+      
+    host_b:
+      kind: linux
+      image: ghcr.io/hellt/network-multitool
+      cmd: sh -xc "while true; do ping 192.168.3.2; sleep 1; done"
+      exec:
+      - ip address add 192.168.4.2/24 dev eth1
+      - ip route add 192.168.3.0/24 via 192.168.4.1 dev eth1
+      
+    leafA-debug-tools:
+      kind: linux
+      image: ghcr.io/hellt/network-multitool
+      network-mode: container:leafA
+      cmd: sh -c 'if [ "$CAPTURE_PCAP" = "true" ]; then rm -rf /shared/leafA.pcap; tcpdump -l -i any -nn -s 65535 -w /shared/leafA.pcap; else sleep 10000; fi'
+      binds:
+      - ./shared/:/shared/
+  
+  links:
+    - endpoints: ["leafA:tospine", "spine:toleafa"]
+    - endpoints: ["leafB:tospine", "spine:toleafb"]
+    - endpoints: ["host_a:eth1", "leafA:eth1"]
+    - endpoints: ["host_b:eth1", "leafB:eth1"]
+
