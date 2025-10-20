@@ -54,7 +54,7 @@ docker exec clab-grout_frr-spine-net-configure ip route
 
 docker exec -it clab-grout_frr-spine-grout grcli --socket /shared/spine.grout.sock route show
 docker exec -it clab-grout_frr-spine-grout grcli --socket /shared/spine.grout.sock nexthop
-docker exec -it clab-grout_frr-spine-grout grcli --socket /shared/spine.grout.sock events
+docker exec -it clab-grout_frr-spine-grout grcli --socket /shared/spine.grout.sock interface
 
 docker logs -t -f clab-grout_frr-spine-grout
 docker logs -t -f clab-grout_frr-spine
@@ -66,12 +66,20 @@ docker exec -it clab-grout_frr-spine cat /etc/frr/frr.log
 docker exec clab-grout_frr-spine vtysh -c "show bgp ipv4" 
 docker exec clab-grout_frr-spine vtysh -c "show bgp summary"
 docker exec clab-grout_frr-spine vtysh -c "show ip route"
+docker exec clab-grout_frr-spine vtysh -c "show ip nht"
+docker exec clab-grout_frr-spine vtysh -c "show interface"
+docker exec clab-grout_frr-spine vtysh -c "show running-config" 
 
+docker exec -it clab-grout_frr-leafA cat /etc/frr/frr.log
 docker exec clab-grout_frr-leafA vtysh -c "show bgp ipv4" 
 
 ```
 
 
+
+docker exec -it clab-grout_frr-spine-grout grcli --socket /shared/spine.grout.sock logging enable
+docker exec -it clab-grout_frr-spine-grout grcli --socket /shared/spine.grout.sock interface add port p0 devargs net_tap0,remote=toleafa,iface=tap_leafa
+docker exec -it clab-grout_frr-spine-grout grcli --socket /shared/spine.grout.sock address add 192.168.1.1/24 iface p0
 
 
 
