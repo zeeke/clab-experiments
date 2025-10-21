@@ -5,6 +5,12 @@ generated-by: |
 
 # FRR + Grout
 
+%
+v() {
+    echo "\$ $@"
+    bash -c "$@"
+}
+%
 
 This example shows the integration of FRRouting with Grout dataplane ([grout-frr.7.md](https://github.com/DPDK/grout/blob/main/docs/grout-frr.7.md)),
 using the following network topology:
@@ -22,49 +28,20 @@ $ clab deploy
 HostA can ping HostB
 
 ```sh
-$ docker exec clab-grout_frr-host_a ping -c 3 192.168.4.2
-PING 192.168.4.2 (192.168.4.2) 56(84) bytes of data.
-64 bytes from 192.168.4.2: icmp_seq=1 ttl=61 time=0.532 ms
-64 bytes from 192.168.4.2: icmp_seq=2 ttl=61 time=0.798 ms
-64 bytes from 192.168.4.2: icmp_seq=3 ttl=61 time=0.603 ms
-
---- 192.168.4.2 ping statistics ---
-3 packets transmitted, 3 received, 0% packet loss, time 2055ms
-rtt min/avg/max/mdev = 0.532/0.644/0.798/0.112 ms
+% v "docker exec clab-grout_frr-host_a ping -c 3 192.168.4.2"
 ```
 
 ## Inspect
 
 BGP sessions correctly exchanged routes in spine's FRR
 ```sh
-$ docker exec clab-grout_frr-spine vtysh -c "show ip route"
-Codes: K - kernel route, C - connected, L - local, S - static,
-       R - RIP, O - OSPF, I - IS-IS, B - BGP, E - EIGRP, N - NHRP,
-       T - Table, A - Babel, F - PBR, f - OpenFabric,
-       t - Table-Direct,
-       > - selected route, * - FIB route, q - queued, r - rejected, b - backup
-       t - trapped, o - offload failure
-
-IPv4 unicast VRF default:
-C>* 192.168.1.0/24 is directly connected, p0, weight 1, 00:05:19
-L>* 192.168.1.1/32 is directly connected, p0, weight 1, 00:05:19
-C>* 192.168.2.0/24 is directly connected, p1, weight 1, 00:05:19
-L>* 192.168.2.1/32 is directly connected, p1, weight 1, 00:05:19
-B>* 192.168.3.0/24 [20/0] via 192.168.1.2, p0, weight 1, 00:05:17
-B>* 192.168.4.0/24 [20/0] via 192.168.2.2, p1, weight 1, 00:05:17
+% v 'docker exec clab-grout_frr-spine vtysh -c "show ip route"'
 ```
 
 Routes have been installed into Grout
 
 ```sh
-$ docker exec clab-grout_frr-spine-grout grcli --socket /shared/spine.grout.sock route show
-VRF  DESTINATION     NEXT_HOP
-0    192.168.1.0/24  type=L3 iface=p0 vrf=0 origin=INTERNAL af=IPv4 addr=192.168.1.1/24 mac=aa:c1:ab:3e:6d:88 static local link
-0    192.168.2.0/24  type=L3 iface=p1 vrf=0 origin=INTERNAL af=IPv4 addr=192.168.2.1/24 mac=aa:c1:ab:d3:1a:7f static local link
-0    192.168.3.0/24  type=L3 id=12 iface=p0 vrf=0 origin=zebra af=IPv4 addr=192.168.1.2 state=reachable mac=aa:c1:ab:42:15:44
-0    192.168.4.0/24  type=L3 id=11 iface=p1 vrf=0 origin=zebra af=IPv4 addr=192.168.2.2 state=reachable mac=aa:c1:ab:8f:26:ac
-0    fe80:101::/64   type=L3 iface=p0 vrf=0 origin=INTERNAL af=IPv6 addr=fe80::aac1:abff:fe3e:6d88/64 mac=aa:c1:ab:3e:6d:88 static local link
-0    fe80:102::/64   type=L3 iface=p1 vrf=0 origin=INTERNAL af=IPv6 addr=fe80::aac1:abff:fed3:1a7f/64 mac=aa:c1:ab:d3:1a:7f static local link
+% v 'docker exec clab-grout_frr-spine-grout grcli --socket /shared/spine.grout.sock route show'
 ```
 
 
