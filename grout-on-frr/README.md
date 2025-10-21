@@ -10,6 +10,11 @@ using the following network topology:
 
 ![Network Topology](./topology.svg)
 
+## Requirements
+
+- [Docker](https://www.docker.com/)
+- [CONTAINERlab](https://containerlab.dev/) CLI
+
 ## Setup
 
 ```sh
