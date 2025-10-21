@@ -1,7 +1,6 @@
----
-generated-by: |
-    bash <(curl -s -L https://github.com/TekWizely/bash-tpl/raw/refs/heads/main/bash-tpl) README.md.tpl | bash > README.md
----
+<!--
+generated-by: bash <(curl -s -L https://github.com/TekWizely/bash-tpl/raw/refs/heads/main/bash-tpl) README.md.tpl | bash > README.md
+-->
 
 # FRR + Grout
 
@@ -24,13 +23,13 @@ HostA can ping HostB
 ```sh
 $ docker exec clab-grout_frr-host_a ping -c 3 192.168.4.2
 PING 192.168.4.2 (192.168.4.2) 56(84) bytes of data.
-64 bytes from 192.168.4.2: icmp_seq=1 ttl=61 time=0.532 ms
-64 bytes from 192.168.4.2: icmp_seq=2 ttl=61 time=0.798 ms
-64 bytes from 192.168.4.2: icmp_seq=3 ttl=61 time=0.603 ms
+64 bytes from 192.168.4.2: icmp_seq=1 ttl=61 time=0.302 ms
+64 bytes from 192.168.4.2: icmp_seq=2 ttl=61 time=0.384 ms
+64 bytes from 192.168.4.2: icmp_seq=3 ttl=61 time=0.460 ms
 
 --- 192.168.4.2 ping statistics ---
-3 packets transmitted, 3 received, 0% packet loss, time 2055ms
-rtt min/avg/max/mdev = 0.532/0.644/0.798/0.112 ms
+3 packets transmitted, 3 received, 0% packet loss, time 2069ms
+rtt min/avg/max/mdev = 0.302/0.382/0.460/0.064 ms
 ```
 
 ## Inspect
@@ -46,12 +45,12 @@ Codes: K - kernel route, C - connected, L - local, S - static,
        t - trapped, o - offload failure
 
 IPv4 unicast VRF default:
-C>* 192.168.1.0/24 is directly connected, p0, weight 1, 00:05:19
-L>* 192.168.1.1/32 is directly connected, p0, weight 1, 00:05:19
-C>* 192.168.2.0/24 is directly connected, p1, weight 1, 00:05:19
-L>* 192.168.2.1/32 is directly connected, p1, weight 1, 00:05:19
-B>* 192.168.3.0/24 [20/0] via 192.168.1.2, p0, weight 1, 00:05:17
-B>* 192.168.4.0/24 [20/0] via 192.168.2.2, p1, weight 1, 00:05:17
+C>* 192.168.1.0/24 is directly connected, p0, weight 1, 00:09:21
+L>* 192.168.1.1/32 is directly connected, p0, weight 1, 00:09:21
+C>* 192.168.2.0/24 is directly connected, p1, weight 1, 00:09:21
+L>* 192.168.2.1/32 is directly connected, p1, weight 1, 00:09:21
+B>* 192.168.3.0/24 [20/0] via 192.168.1.2, p0, weight 1, 00:09:19
+B>* 192.168.4.0/24 [20/0] via 192.168.2.2, p1, weight 1, 00:09:19
 ```
 
 Routes have been installed into Grout

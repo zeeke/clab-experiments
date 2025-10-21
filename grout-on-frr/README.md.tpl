@@ -1,7 +1,6 @@
----
-generated-by: |
-    bash <(curl -s -L https://github.com/TekWizely/bash-tpl/raw/refs/heads/main/bash-tpl) README.md.tpl | bash > README.md
----
+<!--
+generated-by: bash <(curl -s -L https://github.com/TekWizely/bash-tpl/raw/refs/heads/main/bash-tpl) README.md.tpl | bash > README.md
+-->
 
 # FRR + Grout
 
