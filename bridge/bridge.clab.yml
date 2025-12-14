@@ -1,0 +1,34 @@
+name: bridge
+
+topology:
+  kinds:
+    linux:
+      image: ghcr.io/hellt/network-multitool
+
+  nodes:
+    br01|bp1:
+      kind: bridge
+      network-mode: "container:bp1"
+    bp1:
+      kind: linux
+
+    n1:
+      kind: linux
+      labels: { graph-icon: "host" }
+      exec:
+        - ip address add 192.168.1.1/24 dev eth1
+    n2:
+      kind: linux
+      labels: { graph-icon: "host" }
+      exec:
+        - ip address add 192.168.1.2/24 dev eth1
+    n3:
+      kind: linux
+      labels: { graph-icon: "host" }
+      exec:
+        - ip address add 192.168.1.3/24 dev eth1
+  
+  links:
+    - endpoints: ["n1:eth1", "br01|bp1:n1eth1"]
+    - endpoints: ["n2:eth1", "br01|bp1:n2eth1"]
+    - endpoints: ["n3:eth1", "br01|bp1:n3eth1"]
