@@ -1,0 +1,19 @@
+# topology documentation: http://containerlab.dev/lab-examples/min-clos/
+name: clos01
+
+topology:
+  kinds:
+    linux:
+      image: ghcr.io/hellt/network-multitool
+  nodes:
+    peer1:
+      kind: linux
+      exec:
+        - ip address add 192.168.1.1/24 dev eth1
+    peer2:
+      kind: linux
+      exec:
+        - ip address add 192.168.1.2/24 dev eth1
+  links:
+    - endpoints: ["peer1:eth1", "peer2:eth1"]
+    
