@@ -7,13 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: srl-labs/setup-containerlab@v1
-      - name: Run all test.sh files in top-level directories
+
+      - name: Install containerlab
         run: |
-          set -e
-          for d in */ ; do
-            if [ -f "$d/test.sh" ]; then
-              echo "Running test: $d/test.sh"
-              bash "$d/test.sh"
-            fi
-          done
+          sudo bash -c "$(curl -sL https://get.containerlab.dev)"
+
+      - name: Smoke tests
+        run: sudo bash test/run-all-tests.sh

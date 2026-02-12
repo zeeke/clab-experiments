@@ -15,4 +15,15 @@ tearDown() {
     containerlab destroy -t "${TOPOLOGY_FILE}" --cleanup
 }
 
+waitForBGPRoute() {
+    local route=$1
+    local node=$2
+    for i in $(seq 1 30); do
+        out="$(docker exec "clab-${TOPOLOGY_NAME}-${node}" vtysh -c "show ip route")"
+        echo "$out" | grep -q "B>\* ${route}" && return 0
+        sleep 1
+    done
+    fail "Timed out waiting for BGP route ${route} in ${node}."
+}
+
 . "$(dirname "${BASH_SOURCE[0]}")/shunit2"
