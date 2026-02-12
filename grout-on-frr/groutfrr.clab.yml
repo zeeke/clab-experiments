@@ -68,9 +68,7 @@ topology:
           exec:
           - {target: container, phase: on-exit, command: "grcli --socket /shared/spine.grout.sock logging enable"}
           - {target: container, phase: on-exit, command: "grcli --socket /shared/spine.grout.sock interface add port p0 devargs net_tap0,remote=toleafa,iface=tap_leafa"}
-          - {target: container, phase: on-exit, command: "grcli --socket /shared/spine.grout.sock address add 192.168.1.1/24 iface p0"}
           - {target: container, phase: on-exit, command: "grcli --socket /shared/spine.grout.sock interface add port p1 devargs net_tap1,remote=toleafb,iface=tap_leafb"}
-          - {target: container, phase: on-exit, command: "grcli --socket /shared/spine.grout.sock address add 192.168.2.1/24 iface p1"}
       binds:
         - ./shared/:/shared/
 
@@ -78,16 +76,17 @@ topology:
       kind: linux
       image: ghcr.io/hellt/network-multitool
       network-mode: container:spine-grout
-      cmd: sh -c 'if [ "$CAPTURE_PCAP" = "true" ]; then rm -rf /shared/spine.gr-loop0.pcap; tcpdump -l -i any -nn -s 65535 -w /shared/spine.gr-loop0.pcap; else sleep 10000; fi'
+      cmd: sh -c 'if [ "$CAPTURE_PCAP" = "true" ]; then rm -rf /shared/spine.main.pcap; tcpdump -l -i any -nn -s 65535 -w /shared/spine.main.pcap; else sleep 10000; fi'
       stages:
         create:
           wait-for:
             - node: spine-grout
               stage: healthy
       exec:
-      - ip address add 192.168.1.1/32 dev gr-loop0
-      - ip address add 192.168.2.1/32 dev gr-loop0
-      - ip route add default dev gr-loop0
+      - sleep 10000
+      #- ip address add 192.168.1.1/32 dev main
+      #- ip address add 192.168.2.1/32 dev main
+      #- ip route add default dev main
       binds:
       - ./shared/:/shared/
 
