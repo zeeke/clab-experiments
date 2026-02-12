@@ -1,0 +1,19 @@
+name: Smoke Test
+
+on: [push, pull_request]
+
+jobs:
+  smoke-test:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - uses: srl-labs/setup-containerlab@v1
+      - name: Run all test.sh files in top-level directories
+        run: |
+          set -e
+          for d in */ ; do
+            if [ -f "$d/test.sh" ]; then
+              echo "Running test: $d/test.sh"
+              bash "$d/test.sh"
+            fi
+          done
